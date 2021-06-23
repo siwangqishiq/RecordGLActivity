@@ -1,0 +1,3 @@
+include ':shaderlab'
+include ':app'
+rootProject.name = "RecordGLActivity"
