@@ -15,5 +15,25 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
+    <Button
+        android:id="@+id/run_btn"
+        android:text="运行"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        />
 
+    <EditText
+        android:id="@+id/code_text"
+        android:gravity="left|top"
+        android:text="#version 330 es;"
+        app:layout_constraintTop_toBottomOf="@id/shader_view"
+        app:layout_constraintBottom_toTopOf="@id/run_btn"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -121,20 +121,20 @@ void Shader::setUniformFloat(std::string key , float value){
     glUniform1f(loc , value);
 }
 
-void Shader::setUniformMat4(std::string key , glm::mat4 mat){
-    GLint loc = findUniformLocation(key);
-	glUniformMatrix4fv(loc , 1 , GL_FALSE , glm::value_ptr(mat));
-}
+//void Shader::setUniformMat4(std::string key , glm::mat4 mat){
+//    GLint loc = findUniformLocation(key);
+//	glUniformMatrix4fv(loc , 1 , GL_FALSE , glm::value_ptr(mat));
+//}
 
 void Shader::setUniformVec3(std::string key , float x , float y , float z){
 	GLint loc = findUniformLocation(key);
 	glUniform3f(loc , x , y , z);
 }
 
-void Shader::setUniformVec3(std::string key ,glm::vec3 value){
-	GLint loc = findUniformLocation(key);
-	glUniform3fv(loc , 1 , (float *)(&value[0]));
-}
+//void Shader::setUniformVec3(std::string key ,glm::vec3 value){
+//	GLint loc = findUniformLocation(key);
+//	glUniform3fv(loc , 1 , (float *)(&value[0]));
+//}
 
 void Shader::setUniformVec2(std::string key , float x , float y){
 	GLint loc = findUniformLocation(key);
