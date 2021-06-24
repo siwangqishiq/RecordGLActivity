@@ -55,7 +55,7 @@ public:
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        LOGE("shaderID = %d" , shader.getProgramId());
+        //LOGE("shaderID = %d" , shader.getProgramId());
         shader.useShader();
         shader.setUniformFloat("iTime", time);
         shader.setUniformVec2("iResolution" , width , height);
