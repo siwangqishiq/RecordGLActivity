@@ -2,13 +2,17 @@ package com.xinlan.shaderlab;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
+
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class ShaderView extends GLSurfaceView  implements GLSurfaceView.Renderer{
     private NativeBridge mNativeBridge = new NativeBridge();
+
     private long lastRenderTime = -1;
 
     public ShaderView(Context context) {
@@ -19,6 +23,12 @@ public class ShaderView extends GLSurfaceView  implements GLSurfaceView.Renderer
     public ShaderView(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView();
+    }
+
+    public void compileAndRun(final String src){
+        queueEvent(()->{
+            mNativeBridge.compileAndRun(src);
+        });
     }
 
     private void initView() {

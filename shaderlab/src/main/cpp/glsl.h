@@ -3,6 +3,10 @@
 #define GLSL(A) "#version 300 es \n" #A
 #endif
 
+#ifndef GLSL_CODE
+#define GLSL_CODE(A) "\n" #A
+#endif
+
 #include <GLES3/gl3.h>
 #include <GLES2/gl2ext.h>
 

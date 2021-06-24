@@ -14,4 +14,7 @@ public final class NativeBridge {
     public native void render(long deltaTime);
 
     public native void destory();
+
+    //提交新代码 并编译运行
+    public native void compileAndRun(String mainImageSrc);
 }

@@ -10,97 +10,27 @@
 class App{
 public:
     void init(){
-        std::string vertexSrc = GLSL(
+        vertSrc = GLSL(
             layout(location = 0) in vec3 aPos;
                     void main(){
                         gl_Position = vec4(aPos.xyz, 1.0);
                     }
-            );
+             );
 
-        std::string fragSrc = GLSL(
-                precision highp float; //
-                out vec4 fragColor;
+        std::string mainCode = GLSL_CODE(
+                vec4 mainImage( out vec4 fragColor, in vec2 fragCoord){
+                   vec2 uv = fragCoord/iResolution.xy;
+                   // Time varying pixel color
+                   vec3 col = 0.5 + 0.5*cos(iTime+uv.xyx+vec3(0,2,4));
+                   // Output to screen
+                   fragColor = vec4(1.0 ,0.0 , 0.0,1.0);
+                   return fragColor;
+               }
+        );
 
-                uniform float iTime;
-                uniform vec2 iResolution;
-
-//                vec4 mainImage(vec2 fragCoord){
-//                    vec4 fragColor;
-//                    vec2 uv = fragCoord/iResolution.xy;
-//
-//                    // Time varying pixel color
-//                    vec3 col = 0.5 + 0.5*cos(iTime+uv.xyx+vec3(0,2,4));
-//
-//                    // Output to screen
-//                    fragColor = vec4(col,1.0);
-//
-//                    return fragColor;
-//                }
-
-                  vec3 palette(float d){
-                      return mix(vec3(0.2,0.7,0.9),vec3(1.,0.,1.),d);
-                  }
-
-                  vec2 rotate(vec2 p,float a){
-                      float c = cos(a);
-                      float s = sin(a);
-                      return p*mat2(c,s,-s,c);
-                  }
-
-                  float map(vec3 p){
-                      for( int i = 0; i<8; ++i){
-                          float t = iTime*0.2;
-                          p.xz =rotate(p.xz,t);
-                          p.xy =rotate(p.xy,t*1.89);
-                          p.xz = abs(p.xz);
-                          p.xz-=.5;
-                      }
-                      return dot(sign(p),p)/5.;
-                  }
-
-                  vec4 rm (vec3 ro, vec3 rd){
-                      float t = 0.;
-                      vec3 col = vec3(0.);
-                      float d;
-                      for(float i =0.; i<64.; i++){
-                          vec3 p = ro + rd*t;
-                          d = map(p)*.5;
-                          if(d<0.02){
-                              break;
-                          }
-                          if(d>100.){
-                              break;
-                          }
-                          //col+=vec3(0.6,0.8,0.8)/(400.*(d));
-                          col+=palette(length(p)*.1)/(400.*(d));
-                          t+=d;
-                      }
-                      return vec4(col,1./(d*100.));
-                  }
-                  void mainImage( out vec4 fragColor, in vec2 fragCoord )
-                  {
-                      vec2 uv = (fragCoord-(iResolution.xy/2.))/iResolution.x;
-                      vec3 ro = vec3(0.,0.,-50.);
-                      ro.xz = rotate(ro.xz,iTime);
-                      vec3 cf = normalize(-ro);
-                      vec3 cs = normalize(cross(cf,vec3(0.,1.,0.)));
-                      vec3 cu = normalize(cross(cf,cs));
-
-                      vec3 uuv = ro+cf*3. + uv.x*cs + uv.y*cu;
-
-                      vec3 rd = normalize(uuv-ro);
-
-                      vec4 col = rm(ro,rd);
-
-                      fragColor = col;
-                  }
-
-              void main(){
-                  mainImage(fragColor , gl_FragCoord.xy);
-              }
-          );
-
-        shader = Shader::buildGPUProgram(vertexSrc , fragSrc);
+        //sprintf("" ,fragCodeTemplate.c_str() , "helloworld()");
+        //shader = Shader::buildGPUProgram(vertSrc , fragSrc);
+        resetFragShaderCode(mainCode);
 
         glGenVertexArrays(1 , &vao);
         glGenBuffers(1 , &vbo);
@@ -125,6 +55,7 @@ public:
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        LOGE("shaderID = %d" , shader.getProgramId());
         shader.useShader();
         shader.setUniformFloat("iTime", time);
         shader.setUniformVec2("iResolution" , width , height);
@@ -140,6 +71,48 @@ public:
         glDeleteVertexArrays(1 , &vao);
     }
 
+    void resetFragShaderCode(std::string mainCode){
+        fragSrc = string_format(fragTemplate , mainCode.c_str());
+        LOGE("fragSrc = %s \n" , fragSrc.c_str());
+        shader = Shader::buildGPUProgram(vertSrc , fragSrc);
+    }
+
+    std::string jstring2string(JNIEnv *env, jstring jStr) {
+        if (!jStr)
+            return "";
+
+        const jclass stringClass = env->GetObjectClass(jStr);
+        const jmethodID getBytes = env->GetMethodID(stringClass, "getBytes", "(Ljava/lang/String;)[B");
+        const jbyteArray stringJbytes = (jbyteArray) env->CallObjectMethod(jStr, getBytes, env->NewStringUTF("UTF-8"));
+
+        size_t length = (size_t) env->GetArrayLength(stringJbytes);
+        jbyte* pBytes = env->GetByteArrayElements(stringJbytes, NULL);
+
+        std::string ret = std::string((char *)pBytes, length);
+        env->ReleaseByteArrayElements(stringJbytes, pBytes, JNI_ABORT);
+
+        env->DeleteLocalRef(stringJbytes);
+        env->DeleteLocalRef(stringClass);
+        return ret;
+    }
+
+    std::string string_format(const std::string fmt_str, ...) {
+        int final_n, n = ((int)fmt_str.size()) * 2; /* Reserve two times as much as the length of the fmt_str */
+        std::unique_ptr<char[]> formatted;
+        va_list ap;
+        while(1) {
+            formatted.reset(new char[n]); /* Wrap the plain char array into the unique_ptr */
+            strcpy(&formatted[0], fmt_str.c_str());
+            va_start(ap, fmt_str);
+            final_n = vsnprintf(&formatted[0], n, fmt_str.c_str(), ap);
+            va_end(ap);
+            if (final_n < 0 || final_n >= n)
+                n += abs(final_n - n + 1);
+            else
+                break;
+        }
+        return std::string(formatted.get());
+    }
 private:
 
     float vertices[3 * 6] = {
@@ -160,6 +133,22 @@ private:
     unsigned int vbo;
 
     float time;
+
+    std::string vertSrc;
+    std::string fragSrc;
+
+    std::string fragTemplate = GLSL(
+     precision highp float; //
+          out vec4 fragColor;
+          uniform float iTime;
+          uniform vec2 iResolution;
+
+          %s
+
+          void main(){
+              mainImage(fragColor , gl_FragCoord.xy);
+          }
+     );
 };
 
 static App *app = nullptr;
@@ -195,4 +184,14 @@ Java_com_xinlan_shaderlab_NativeBridge_destory(JNIEnv *env, jobject thiz) {
     app->destory();
     delete app;
     app = nullptr;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_xinlan_shaderlab_NativeBridge_compileAndRun(JNIEnv *env, jobject thiz,
+                                                     jstring main_image_src) {
+    if(app != nullptr){
+        std::string src = app->jstring2string(env , main_image_src);
+        app->resetFragShaderCode(src);
+    }
 }
